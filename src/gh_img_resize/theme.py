@@ -199,6 +199,34 @@ def apply_theme(root: tk.Misc, palette: Palette) -> ttk.Style:
             ("active", palette.accent_hover),
         ],
     )
+    style.configure(
+        "TCombobox",
+        fieldbackground=palette.surface,
+        background=palette.surface,
+        foreground=palette.text,
+        bordercolor=palette.border,
+        arrowcolor=palette.text,
+        lightcolor=palette.surface,
+        darkcolor=palette.surface,
+        padding=(6, 4),
+    )
+    style.map(
+        "TCombobox",
+        fieldbackground=[
+            ("readonly", palette.surface),
+            ("disabled", palette.preview),
+        ],
+        foreground=[
+            ("readonly", palette.text),
+            ("disabled", palette.muted),
+        ],
+        background=[("readonly", palette.surface)],
+        arrowcolor=[("disabled", palette.muted)],
+    )
+    root.option_add("*TCombobox*Listbox.background", palette.surface)
+    root.option_add("*TCombobox*Listbox.foreground", palette.text)
+    root.option_add("*TCombobox*Listbox.selectBackground", palette.accent)
+    root.option_add("*TCombobox*Listbox.selectForeground", palette.accent_text)
     return style
 
 

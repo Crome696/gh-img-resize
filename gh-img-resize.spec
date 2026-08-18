@@ -10,6 +10,7 @@ hiddenimports = [
     "PIL.PngImagePlugin",
     "PIL.GifImagePlugin",
     "PIL.WebPImagePlugin",
+    "gh_img_resize.i18n",
 ]
 
 a = Analysis(
