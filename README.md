@@ -9,6 +9,7 @@
 [![Build](https://github.com/Crome696/gh-img-resize/actions/workflows/build.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/build.yml)
 [![Quality](https://github.com/Crome696/gh-img-resize/actions/workflows/quality.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/quality.yml)
 [![Security](https://github.com/Crome696/gh-img-resize/actions/workflows/security.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Project snapshot
 
@@ -19,6 +20,7 @@
 - **Output:** exactly 999,000 bytes
 - **Native builds:** Windows EXE, macOS `.app`, Linux binary (built on the target OS)
 - **UI language:** German desktop UI; this README is English
+- **License:** MIT
 
 ## What it does
 
@@ -170,4 +172,11 @@ GitHub Actions workflow `.github/workflows/build.yml` runs tests and native buil
 - Output files may contain padding metadata (JPEG comment, PNG `tEXt`, GIF comment, or WebP `META`) so the byte length is exact.
 - Animated GIFs become a still image of the first frame.
 - There is no codesigning in the spec; unsigned Windows and macOS builds may be blocked by SmartScreen or Gatekeeper until the user allows them.
-- This repository does not currently include a LICENSE file.
+
+## Contributing and support
+
+Bug reports and feature requests can be opened as GitHub issues in this repository. This project does not currently include a separate contribution guide.
+
+## License and credits
+
+This project is released under the [MIT License](LICENSE). Copyright (c) 2026 Crome696.
