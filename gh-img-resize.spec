@@ -62,6 +62,8 @@ if sys.platform == "darwin":
         info_plist={
             "CFBundleName": "gh-img-resize",
             "CFBundleDisplayName": "GitHub 999 KB Image",
+            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleVersion": "1.0.0",
             "NSHighResolutionCapable": True,
         },
     )

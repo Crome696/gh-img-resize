@@ -12,6 +12,7 @@
 
 ## Project snapshot
 
+- **Version:** 1.0.0 ([changelog](CHANGELOG.md))
 - **Type:** Tkinter desktop app with a local image encoder
 - **CI runtime:** Python 3.12
 - **Libraries:** Pillow, PyInstaller
@@ -59,6 +60,7 @@ flowchart LR
 
 ## Project structure
 
+- `CHANGELOG.md` — released versions
 - `run.py` — desktop entry point used by source runs and PyInstaller
 - `src/gh_img_resize/app.py` — Tkinter UI
 - `src/gh_img_resize/resizer.py` — exact-size encode and pad logic
