@@ -19,7 +19,7 @@
 - **Input:** JPEG, PNG, GIF, WebP
 - **Output:** exactly 999,000 bytes
 - **Native builds:** Windows EXE, macOS `.app`, Linux binary (built on the target OS)
-- **UI language:** German desktop UI; this README is English
+- **UI language:** nine in-app locales (EN, ES, DE, FR, IT, PT-BR, JA, KO, ZH-CN) with OS detection, a language switcher, and a persisted choice; this README is English
 - **License:** MIT
 
 ## What it does
@@ -38,6 +38,7 @@ Typical use is GitHub uploads such as repository social previews. The saved file
 - Applies EXIF orientation before re-encoding
 - Runs locally; the application source has no network calls
 - Ships as a native PyInstaller binary (no Electron wrapper, no cross-compile)
+- Localizes the desktop UI into EN, ES, DE, FR, IT, PT-BR, JA, KO, and ZH-CN, with OS-locale detection and a persisted in-app switcher
 
 ## Architecture
 
@@ -63,8 +64,10 @@ flowchart LR
 
 - `run.py` — desktop entry point used by source runs and PyInstaller
 - `src/gh_img_resize/app.py` — Tkinter UI
+- `src/gh_img_resize/i18n.py` — locale catalogs, OS detection, and persisted language
 - `src/gh_img_resize/resizer.py` — exact-size encode and pad logic
 - `tests/test_resizer.py` — size and aspect-ratio tests
+- `tests/test_i18n.py` — locale catalogs, OS matching, and persisted language
 - `gh-img-resize.spec`, `build.ps1`, `build.sh` — native builds
 - `pyproject.toml`, `requirements-dev.txt` — Ruff and pip-audit tooling
 - `.github/workflows/build.yml` — test and artifact workflow
@@ -106,6 +109,8 @@ PYTHONPATH=src .venv/bin/python run.py
 1. Choose an image in the desktop UI.
 2. Review the preview, format, pixel size, and current byte size.
 3. Save as 999 KB. The encoder writes exactly 999,000 bytes and keeps the original extension.
+
+The header language switcher lists EN, ES, DE, FR, IT, PT-BR, JA, KO, and ZH-CN. The first launch follows the OS locale when it matches a supported language; otherwise the UI is English. A later launch restores the last selected language.
 
 If the source was already smaller than 999 KB, the UI reports that the file was padded rather than re-encoded. If pixel size had to change, the UI reports that the resolution was reduced with the same aspect ratio.
 

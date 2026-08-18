@@ -36,6 +36,11 @@ ProgressCallback = Callable[[str], None]
 class ResizeError(ValueError):
     """Raised when an image cannot be fitted to the target size."""
 
+    def __init__(self, key: str, **params: object) -> None:
+        self.key = key
+        self.params = params
+        super().__init__(key)
+
 
 @dataclass(frozen=True)
 class ResizeResult:
@@ -66,15 +71,13 @@ def resize_to_target(
 ) -> ResizeResult:
     """Return image bytes with length exactly ``target_bytes``."""
     if target_bytes >= GITHUB_MAX_BYTES:
-        raise ResizeError(
-            "Target must stay under GitHub's 1 MB limit (1,000,000 bytes)"
-        )
+        raise ResizeError("error.target_over_limit")
     source = Path(path)
     if source.suffix.lower() not in SUPPORTED_EXTENSIONS:
-        raise ResizeError(f"Unsupported image format: {source.suffix}")
+        raise ResizeError("error.unsupported_suffix", suffix=source.suffix)
 
     original = source.read_bytes()
-    _emit(progress, "Bild wird geladen…")
+    _emit(progress, "progress.loading")
     with Image.open(io.BytesIO(original)) as src:
         fmt = _normalize_format(src.format, source.suffix)
         original_width, original_height = src.size
@@ -96,7 +99,7 @@ def resize_to_target(
         )
 
     if len(original) < target_bytes and _can_pad(fmt, len(original), target_bytes):
-        _emit(progress, "Datei ist kleiner als 999 KB — es wird nur aufgefüllt…")
+        _emit(progress, "progress.padding")
         padded = _pad(fmt, original, target_bytes)
         return ResizeResult(
             data=padded,
@@ -111,12 +114,12 @@ def resize_to_target(
             reencoded=False,
         )
 
-    _emit(progress, "Größe und Qualität werden angepasst…")
+    _emit(progress, "progress.adjusting")
     encoded, out_image, scaled = _fit_to_target(image, fmt, target_bytes, progress)
     try:
         padded = _pad(fmt, encoded, target_bytes)
     except _CannotPad as exc:
-        raise ResizeError("Could not pad the encoded image to exactly 999 KB") from exc
+        raise ResizeError("error.cannot_pad") from exc
     return ResizeResult(
         data=padded,
         format=fmt,
@@ -141,7 +144,7 @@ def _normalize_format(detected: str | None, suffix: str) -> str:
     if mapped:
         return mapped
     if not detected:
-        raise ResizeError("Could not detect image format")
+        raise ResizeError("error.detect_format")
     return "JPEG" if detected.upper() == "JPG" else detected.upper()
 
 
@@ -196,7 +199,7 @@ def _encode(image: Image.Image, fmt: str, quality: int | None = None) -> bytes:
     elif fmt == "GIF":
         image.save(buffer, format="GIF", optimize=True)
     else:
-        raise ResizeError(f"Unsupported image format: {fmt}")
+        raise ResizeError("error.unsupported_encode_format", fmt=fmt)
     return buffer.getvalue()
 
 
@@ -227,14 +230,14 @@ def _fit_to_target(
         found = _search_quality(image, fmt, target_bytes)
         if found is not None:
             return found, image, False
-        _emit(progress, "Auflösung wird bei gleichem Seitenverhältnis reduziert…")
+        _emit(progress, "progress.scaling")
         data, scaled_image = _search_scale_lossy(image, fmt, target_bytes)
         return data, scaled_image, True
 
     found = _try_encode(image, fmt, target_bytes)
     if found is not None:
         return found, image, False
-    _emit(progress, "Auflösung wird bei gleichem Seitenverhältnis reduziert…")
+    _emit(progress, "progress.scaling")
     data, scaled_image = _search_scale_lossless(image, fmt, target_bytes)
     return data, scaled_image, True
 
@@ -280,7 +283,7 @@ def _search_scale_lossy(
         else:
             high = mid - 1
     if best is None:
-        raise ResizeError("Could not shrink the image to 999 KB")
+        raise ResizeError("error.cannot_shrink")
     return best
 
 
@@ -299,7 +302,7 @@ def _search_scale_lossless(
         else:
             high = mid - 1
     if best is None:
-        raise ResizeError("Could not shrink the image to 999 KB")
+        raise ResizeError("error.cannot_shrink")
     return best
 
 
@@ -307,7 +310,7 @@ def _pad(fmt: str, data: bytes, target_bytes: int) -> bytes:
     if len(data) == target_bytes:
         return data
     if len(data) > target_bytes:
-        raise ResizeError("Encoded image is larger than the 999 KB target")
+        raise ResizeError("error.encoded_too_large")
     if fmt == "JPEG":
         return _pad_jpeg(data, target_bytes)
     if fmt == "PNG":
@@ -316,13 +319,13 @@ def _pad(fmt: str, data: bytes, target_bytes: int) -> bytes:
         return _pad_gif(data, target_bytes)
     if fmt == "WEBP":
         return _pad_webp(data, target_bytes)
-    raise ResizeError(f"Unsupported image format: {fmt}")
+    raise ResizeError("error.unsupported_encode_format", fmt=fmt)
 
 
 def _pad_jpeg(data: bytes, target_bytes: int) -> bytes:
     eoi = data.rfind(b"\xff\xd9")
     if eoi < 0:
-        raise ResizeError("JPEG end marker not found")
+        raise ResizeError("error.jpeg_eoi")
     remaining = target_bytes - len(data)
     if remaining < 4:
         raise _CannotPad
@@ -343,7 +346,7 @@ def _pad_jpeg(data: bytes, target_bytes: int) -> bytes:
 
 def _find_png_iend(data: bytes) -> int:
     if data[:8] != b"\x89PNG\r\n\x1a\n":
-        raise ResizeError("Not a PNG file")
+        raise ResizeError("error.not_png")
     pos = 8
     while pos + 12 <= len(data):
         length = int.from_bytes(data[pos : pos + 4], "big")
@@ -351,7 +354,7 @@ def _find_png_iend(data: bytes) -> int:
         if chunk_type == b"IEND":
             return pos
         pos += 12 + length
-    raise ResizeError("PNG IEND chunk not found")
+    raise ResizeError("error.png_iend")
 
 
 def _pad_png(data: bytes, target_bytes: int) -> bytes:
@@ -399,7 +402,7 @@ def _gif_padding(need: int) -> bytes | None:
 
 def _pad_gif(data: bytes, target_bytes: int) -> bytes:
     if not data or data[-1] != 0x3B:
-        raise ResizeError("GIF trailer not found")
+        raise ResizeError("error.gif_trailer")
     padding = _gif_padding(target_bytes - len(data))
     if padding is None:
         raise _CannotPad
@@ -408,7 +411,7 @@ def _pad_gif(data: bytes, target_bytes: int) -> bytes:
 
 def _pad_webp(data: bytes, target_bytes: int) -> bytes:
     if data[:4] != b"RIFF" or data[8:12] != b"WEBP":
-        raise ResizeError("Not a WebP file")
+        raise ResizeError("error.not_webp")
     need = target_bytes - len(data)
     extra = need - 8
     if extra < 0 or extra % 2 != 0:

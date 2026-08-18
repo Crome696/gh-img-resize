@@ -16,3 +16,4 @@ select = ["E", "F", "I", "UP", "B", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
+"src/gh_img_resize/i18n.py" = ["E501"]
