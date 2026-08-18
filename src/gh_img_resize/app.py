@@ -16,6 +16,7 @@ from gh_img_resize.resizer import (
     ResizeResult,
     resize_to_target,
 )
+from gh_img_resize.theme import apply_theme, detect_system_appearance, palette_for
 
 FILE_TYPES = [
     (
@@ -34,56 +35,81 @@ class ImageResizeApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("GitHub Bild auf 999 KB")
-        self.minsize(520, 520)
-        self.geometry("560x620")
+        self.minsize(600, 640)
+        self.geometry("640x720")
         self.source_path: Path | None = None
         self.preview_image: ImageTk.PhotoImage | None = None
         self._busy = False
+        self.palette = palette_for(detect_system_appearance())
+        apply_theme(self, self.palette)
         self._build()
 
     def _build(self) -> None:
-        root = ttk.Frame(self, padding=16)
+        root = ttk.Frame(self, style="Canvas.TFrame", padding=24)
         root.pack(fill=tk.BOTH, expand=True)
 
+        header = ttk.Frame(root, style="Canvas.TFrame")
+        header.pack(fill=tk.X, pady=(0, 20))
+        ttk.Label(header, text="GitHub Bild auf 999 KB", style="Title.TLabel").pack(
+            anchor=tk.W
+        )
         ttk.Label(
-            root,
+            header,
             text="Bild wählen. Seitenverhältnis und Format bleiben erhalten.\n"
             "Die gespeicherte Datei ist genau 999 KB (999.000 Bytes),\n"
             "unter GitHubs 1-MB-Limit (1.000.000 Bytes).",
+            style="Subtitle.TLabel",
             justify=tk.LEFT,
-        ).pack(anchor=tk.W)
+        ).pack(anchor=tk.W, pady=(8, 0))
 
-        buttons = ttk.Frame(root)
-        buttons.pack(fill=tk.X, pady=(12, 8))
-        ttk.Button(buttons, text="Bild auswählen…", command=self._choose_image).pack(
-            side=tk.LEFT
-        )
+        buttons = ttk.Frame(root, style="Canvas.TFrame")
+        buttons.pack(fill=tk.X, pady=(0, 16))
+        ttk.Button(
+            buttons,
+            text="Bild auswählen…",
+            command=self._choose_image,
+            style="Secondary.TButton",
+        ).pack(side=tk.LEFT)
         self.save_button = ttk.Button(
             buttons,
             text="Als 999 KB speichern…",
             command=self._save_image,
             state=tk.DISABLED,
+            style="Accent.TButton",
         )
-        self.save_button.pack(side=tk.LEFT, padx=(8, 0))
+        self.save_button.pack(side=tk.LEFT, padx=(12, 0))
 
+        preview_card = ttk.Frame(root, style="Card.TFrame", padding=16)
+        preview_card.pack(fill=tk.BOTH, expand=True, pady=(0, 16))
         self.preview_label = ttk.Label(
-            root,
+            preview_card,
             text="Noch kein Bild gewählt",
+            style="Preview.TLabel",
             anchor=tk.CENTER,
-            relief=tk.SOLID,
-            padding=8,
         )
-        self.preview_label.pack(fill=tk.BOTH, expand=True, pady=(8, 8))
+        self.preview_label.pack(fill=tk.BOTH, expand=True)
 
+        meta_card = ttk.Frame(root, style="Card.TFrame", padding=16)
+        meta_card.pack(fill=tk.X)
         self.info_var = tk.StringVar(value="Bitte ein Bild auswählen.")
-        ttk.Label(root, textvariable=self.info_var, justify=tk.LEFT).pack(
-            anchor=tk.W, fill=tk.X
-        )
-
+        ttk.Label(
+            meta_card,
+            textvariable=self.info_var,
+            style="Body.TLabel",
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, fill=tk.X)
         self.status_var = tk.StringVar(value="")
-        ttk.Label(root, textvariable=self.status_var, foreground="#444").pack(
-            anchor=tk.W, pady=(8, 0)
+        self.status_label = ttk.Label(
+            meta_card,
+            textvariable=self.status_var,
+            style="Muted.TLabel",
+            justify=tk.LEFT,
         )
+        self.status_label.pack(anchor=tk.W, fill=tk.X, pady=(8, 0))
+
+    def _set_status(self, message: str, *, error: bool = False) -> None:
+        self.status_var.set(message)
+        self.status_label.configure(style="Error.TLabel" if error else "Muted.TLabel")
 
     def _choose_image(self) -> None:
         if self._busy:
@@ -104,7 +130,7 @@ class ImageResizeApp(tk.Tk):
                 width, height = image.size
                 fmt = image.format or path.suffix.upper().lstrip(".")
                 preview = image.copy()
-            preview.thumbnail((420, 280))
+            preview.thumbnail((460, 300))
             if preview.mode not in {"RGB", "RGBA", "L"}:
                 preview = preview.convert("RGB")
             self.preview_image = ImageTk.PhotoImage(preview)
@@ -123,7 +149,7 @@ class ImageResizeApp(tk.Tk):
             f"Aktuelle Größe: {size:,} Bytes ({size / 1000:.1f} KB)\n"
             f"Zielgröße: {TARGET_BYTES:,} Bytes (999 KB, unter 1.000.000 Bytes)"
         )
-        self.status_var.set("Bereit zum Speichern.")
+        self._set_status("Bereit zum Speichern.")
         self.save_button.configure(state=tk.NORMAL)
 
     def _save_image(self) -> None:
@@ -142,7 +168,7 @@ class ImageResizeApp(tk.Tk):
 
         dest_path = Path(destination)
         self._set_busy(True)
-        self.status_var.set("Datei wird angepasst…")
+        self._set_status("Datei wird angepasst…")
 
         def work() -> None:
             try:
@@ -156,7 +182,7 @@ class ImageResizeApp(tk.Tk):
         threading.Thread(target=work, daemon=True).start()
 
     def _report_progress(self, message: str) -> None:
-        self.after(0, lambda: self.status_var.set(message))
+        self.after(0, lambda: self._set_status(message))
 
     def _on_success(self, result: ResizeResult, dest_path: Path) -> None:
         self._set_busy(False)
@@ -174,7 +200,7 @@ class ImageResizeApp(tk.Tk):
             details.append(
                 "Die Originaldatei war kleiner als 999 KB und wurde nur aufgefüllt."
             )
-        self.status_var.set("\n".join(details))
+        self._set_status("\n".join(details))
         self.info_var.set(
             f"Gespeicherte Datei: {dest_path}\n"
             f"Größe: {result.size:,} Bytes\n"
@@ -187,7 +213,7 @@ class ImageResizeApp(tk.Tk):
     def _on_failure(self, exc: Exception) -> None:
         self._set_busy(False)
         message = str(exc) if str(exc) else exc.__class__.__name__
-        self.status_var.set(f"Fehler: {message}")
+        self._set_status(f"Fehler: {message}", error=True)
         title = "Anpassung fehlgeschlagen"
         if isinstance(exc, ResizeError):
             title = "Bild konnte nicht auf 999 KB gebracht werden"
