@@ -1,6 +1,6 @@
 [project]
 name = "gh-img-resize"
-version = "0.1.0"
+version = "1.1.1"
 description = "Desktop tool that resizes images to exactly 999 KB for GitHub uploads"
 requires-python = ">=3.12"
 readme = "README.md"
