@@ -1,14 +1,14 @@
 <p align="center">
-  <img src="docs/assets/banner.png" width="75%" alt="gh-img-resize banner: keep aspect ratio and produce a GitHub-ready 999 KB image">
+  <img src="docs/assets/banner.png" width="75%" alt="GitHub-Img-Resize banner: keep aspect ratio and produce a GitHub-ready 999 KB image">
 </p>
 
-# gh-img-resize
+# GitHub-Img-Resize
 
-**gh-img-resize** is a desktop tool for GitHub users that turns an image into a file of **exactly 999 KB** (999,000 bytes) while keeping the original format and aspect ratio.
+**GitHub-Img-Resize** is a desktop tool for GitHub users that turns an image into a file of **exactly 999 KB** (999,000 bytes) while keeping the original format and aspect ratio.
 
-[![Build](https://github.com/Crome696/gh-img-resize/actions/workflows/build.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/build.yml)
-[![Quality](https://github.com/Crome696/gh-img-resize/actions/workflows/quality.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/quality.yml)
-[![Security](https://github.com/Crome696/gh-img-resize/actions/workflows/security.yml/badge.svg)](https://github.com/Crome696/gh-img-resize/actions/workflows/security.yml)
+[![Build](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/build.yml/badge.svg)](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/build.yml)
+[![Quality](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/quality.yml/badge.svg)](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/quality.yml)
+[![Security](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/security.yml/badge.svg)](https://github.com/Crome696/GitHub-Img-Resize/actions/workflows/security.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Project snapshot
@@ -37,6 +37,7 @@ Typical use is GitHub uploads such as repository social previews. The saved file
 - For PNG and GIF, only reduces pixel size (lossless formats)
 - Applies EXIF orientation before re-encoding
 - Runs locally; the application source has no network calls
+- Adapts the UI colors to the OS light/dark appearance at startup
 - Ships as a native PyInstaller binary (no Electron wrapper, no cross-compile)
 - Localizes the desktop UI into EN, ES, DE, FR, IT, PT-BR, JA, KO, and ZH-CN, with OS-locale detection and a persisted in-app switcher
 
@@ -64,6 +65,7 @@ flowchart LR
 
 - `run.py` — desktop entry point used by source runs and PyInstaller
 - `src/gh_img_resize/app.py` — Tkinter UI
+- `src/gh_img_resize/theme.py` — OS light/dark UI palettes
 - `src/gh_img_resize/i18n.py` — locale catalogs, OS detection, and persisted language
 - `src/gh_img_resize/resizer.py` — exact-size encode and pad logic
 - `tests/test_resizer.py` — size and aspect-ratio tests
